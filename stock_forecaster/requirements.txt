@@ -1,0 +1,14 @@
+streamlit
+pandas
+numpy
+yfinance
+prophet
+plotly
+transformers
+torch
+pandas-ta
+tqdm
+python-dateutil
+pydantic>=2
+tenacity
+
