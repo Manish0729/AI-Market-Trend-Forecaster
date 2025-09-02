@@ -13,4 +13,5 @@ pydantic
 tenacity
 shap
 matplotlib
+scikit-learn
 
