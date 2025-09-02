@@ -1,3 +1,0 @@
-# System packages required for the application
-# This file is used by Streamlit Cloud for system dependencies
-# Leave empty - all dependencies are Python packages in requirements.txt
