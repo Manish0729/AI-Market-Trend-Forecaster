@@ -10,5 +10,5 @@ enableXsrfProtection = false
 gatherUsageStats = false
 " > ~/.streamlit/config.toml
 
-# Use python -m streamlit instead of streamlit command
-python -m streamlit run app.py
+# Use python3 -m streamlit instead of streamlit command
+python3 -m streamlit run app.py
