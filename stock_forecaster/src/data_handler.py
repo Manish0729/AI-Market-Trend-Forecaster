@@ -19,6 +19,8 @@ from typing import List, Tuple
 import numpy as np
 import pandas as pd
 import yfinance as yf
+import time
+import requests
 
 # Set deterministic seeds for reproducibility of synthetic news sampling
 np.random.seed(42)
@@ -271,15 +273,49 @@ def load_data(ticker: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     symbol = ticker.upper().strip()
 
-    # Download last 2 years of daily data
-    try:
-        raw = yf.download(symbol, period="2y", interval="1d", auto_adjust=False, progress=False)
-    except Exception as exc:  # pragma: no cover - defensive for network issues
-        raise RuntimeError(f"Failed to download data for {symbol}: {exc}") from exc
-
+    # Download last 2 years of daily data with multiple attempts
+    raw = None
+    max_attempts = 3
+    
+    for attempt in range(max_attempts):
+        try:
+            # Try different parameters for better compatibility
+            if attempt == 0:
+                raw = yf.download(symbol, period="2y", interval="1d", auto_adjust=False, progress=False)
+            elif attempt == 1:
+                # Try with auto_adjust=True
+                raw = yf.download(symbol, period="2y", interval="1d", auto_adjust=True, progress=False)
+            else:
+                # Try with a shorter period
+                raw = yf.download(symbol, period="1y", interval="1d", auto_adjust=True, progress=False)
+            
+            if raw is not None and not raw.empty:
+                break
+                
+        except Exception as exc:
+            if attempt == max_attempts - 1:
+                # Last attempt failed
+                raise RuntimeError(f"Failed to download data for {symbol} after {max_attempts} attempts: {exc}") from exc
+            # Wait before retry
+            time.sleep(1)
+            continue
+    
     if raw is None or raw.empty:
+        # Suggest alternative tickers
+        suggestions = {
+            'BTC-USD': ['AAPL', 'MSFT', 'GOOGL', 'TSLA'],
+            'AAPL': ['MSFT', 'GOOGL', 'AMZN', 'TSLA'],
+            '^NSEI': ['^GSPC', '^DJI', 'AAPL', 'MSFT'],
+            'TCS.NS': ['AAPL', 'MSFT', 'GOOGL', 'TSLA'],
+            'HDFCBANK.NS': ['JPM', 'BAC', 'WFC', 'AAPL']
+        }
+        
+        alt_tickers = suggestions.get(symbol, ['AAPL', 'MSFT', 'GOOGL', 'TSLA', '^GSPC'])
+        alt_list = ', '.join(alt_tickers)
+        
         raise RuntimeError(
-            f"No data returned for {symbol}. Try another ticker or check your internet connection."
+            f"No data returned for {symbol}. Try these alternatives: {alt_list}. "
+            f"This may be due to market hours, data provider issues, or invalid ticker symbol."
         )
 
     stock_df = _normalize_stock_columns(raw, symbol=symbol)
