@@ -1,5 +1,13 @@
 from __future__ import annotations
 
+"""Streamlit app: Sentiment-Augmented Stock Trend Forecaster.
+
+This app downloads 2 years of OHLCV data from yfinance, generates simulated
+news headlines, analyzes sentiment with a Hugging Face pipeline, and trains a
+Prophet model that uses a 7-day rolling sentiment signal as a regressor to
+forecast the next 90 days of closing prices.
+"""
+
 import warnings
 from datetime import timezone
 from typing import Tuple
@@ -20,13 +28,17 @@ np.random.seed(42)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
-st.set_page_config(page_title="TrendWise AI", page_icon="📈", layout="wide")
+st.set_page_config(page_title="Sentiment-Augmented Stock Trend Forecaster", layout="wide")
 
-# CSS for footer styling only
+# Lightweight, theme-friendly CSS for a simple hero + card feel
 st.markdown(
     """
     <style>
-      /* Footer styling */
+      .sf-hero{ text-align:center; padding: 6px 0 10px; }
+      .sf-hero h1{ margin:0; font-size: 1.8rem; letter-spacing: -0.01em; }
+      .sf-hero p{ margin:.35rem 0 0; color: var(--text-color-secondary, #a7b0c2); }
+      .sf-section-title{ font-weight:700; margin: 4px 0 10px; font-size: 1.1rem; }
+      /* Sticky footer styles */
       .sf-footer{
         position: fixed;
         left: 0; bottom: 0; width: 100%;
@@ -37,20 +49,22 @@ st.markdown(
         border-top: 1px solid #262730;
         z-index: 9999;
       }
+      /* Ensure main content doesn't get hidden behind footer */
       main .block-container{ padding-bottom: 72px !important; }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# Main Header
-st.title("TrendWise AI 📈")
-
-st.markdown("### Decode Market Sentiment. Predict Stock Futures.")
-
-st.write("This tool leverages Artificial Intelligence to analyze market news and forecast stock prices. Use the controls below to configure your prediction.")
-
-st.divider()
+st.markdown(
+    """
+    <div class="sf-hero">
+      <h1>📈 Sentiment-Augmented Stock Trend Forecaster</h1>
+      <p><em>AI + Technical Indicators for Smarter Market Insights</em></p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 # Sidebar toggle for RSI overlay (secondary Y axis)
 show_rsi_overlay = st.sidebar.checkbox("Overlay RSI (0-100) on Forecast Chart", value=False)
@@ -104,7 +118,7 @@ def cached_load_data(ticker: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
         loss = (-delta.where(delta < 0, 0.0)).rolling(window=14, min_periods=14).mean()
         rs = gain / loss.replace(0, pd.NA)
         rsi = 100 - (100 / (1 + rs))
-        stock_df["RSI_14"] = rsi.bfill().ffill()
+        stock_df["RSI_14"] = rsi.fillna(method="bfill").fillna(method="ffill")
         # Fallback MACD (12, 26, 9) using EMA
         ema12 = close.ewm(span=12, adjust=False).mean()
         ema26 = close.ewm(span=26, adjust=False).mean()
@@ -151,23 +165,26 @@ default_tickers = [
     "EURUSD=X", "USDINR=X", "GC=F", "CL=F", "BTC-USD"
 ]
 
-# Configuration Section
-st.header("Configuration")
-
-# Two-column layout
-col1, col2 = st.columns(2)
-
-with col1:
+# Main page controls (like earlier)
+ctl1, ctl2, ctl3 = st.columns([2, 2, 3])
+with ctl1:
     base_choice = st.selectbox("Choose Ticker", default_tickers, index=0)
-    horizon = st.slider("Select Forecast Horizon (Days)", min_value=7, max_value=180, value=30, step=7)
-    overlay_sent = st.checkbox("Overlay TD Sentiment", value=False)
-
-with col2:
+with ctl2:
     custom_ticker = st.text_input("Or enter custom ticker (overrides)", value="")
-    windows = st.multiselect("Select Sentiment Windows (Days)", options=[7, 15, 30], default=[7, 15])
+with ctl3:
+    horizon = st.slider(
+        "Select Forecast Horizon (Days)", min_value=7, max_value=180, value=30, step=7
+    )
 
-# Primary Action Button
-trigger_showdown = st.button("Find Best Model & Run Forecast", type="primary", use_container_width=True)
+ctl4, ctl5, ctl6 = st.columns([2, 2, 2])
+with ctl4:
+    windows = st.multiselect(
+        "Select Sentiment Windows (Days)", options=[7, 15, 30], default=[7, 15]  # Default to 7 and 15 days for better accuracy
+    )
+with ctl5:
+    overlay_sent = st.checkbox("Overlay 7D Sentiment on Forecast", value=False)
+with ctl6:
+    trigger_showdown = st.button("Find Best Model & Run Forecast")
 
 # Final ticker resolution
 ticker = (custom_ticker.strip().upper() or base_choice)

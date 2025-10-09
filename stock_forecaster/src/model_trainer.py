@@ -30,7 +30,8 @@ def find_best_model_and_forecast(
             )
             
             merged_df = pd.merge(stock_df, sentiment_feat, on="date", how="left")
-            merged_df = merged_df.ffill().bfill()
+            merged_df.fillna(method="ffill", inplace=True)
+            merged_df.fillna(method="bfill", inplace=True)
 
             df_prophet = pd.DataFrame({
                 "ds": pd.to_datetime(merged_df["date"]).dt.tz_localize(None),  # Remove timezone
@@ -71,7 +72,8 @@ def find_best_model_and_forecast(
     )
     
     final_merged_df = pd.merge(stock_df, best_sentiment, on="date", how="left")
-    final_merged_df = final_merged_df.ffill().bfill()
+    final_merged_df.fillna(method="ffill", inplace=True)
+    final_merged_df.fillna(method="bfill", inplace=True)
 
     final_train_df = pd.DataFrame({
         "ds": pd.to_datetime(final_merged_df["date"]).dt.tz_localize(None),  # Remove timezone
@@ -124,6 +126,5 @@ def find_best_model_and_forecast(
         plt.close()
     except Exception as e:
         print(f"SHAP explanation failed: {e}")
-        shap_figure = None
 
     return performance_df, final_forecast, best_model, shap_figure
