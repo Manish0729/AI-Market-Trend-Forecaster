@@ -6,7 +6,6 @@ prophet
 plotly
 transformers
 torch
-pandas-ta
 tqdm
 python-dateutil
 pydantic
