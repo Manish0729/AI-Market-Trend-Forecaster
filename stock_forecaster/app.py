@@ -263,7 +263,7 @@ if trigger_showdown:
     )
     fig1.update_yaxes(title_text="Close Price", secondary_y=False)
     fig1.update_yaxes(title_text="Sentiment", secondary_y=True, range=[-1, 1])
-    st.plotly_chart(fig1, width="stretch")
+    st.plotly_chart(fig1, use_container_width=True)
 
     # Model Performance Comparison
     st.markdown("<div class='sf-section-title'>⚡ Model Performance Comparison</div>", unsafe_allow_html=True)
@@ -465,7 +465,7 @@ if trigger_showdown:
         forecast_plot.update_yaxes(title_text="RSI (0-100)", secondary_y=True, range=[0, 100])
     if show_macd_overlay:
         forecast_plot.update_yaxes(title_text="MACD", row=2, col=1)
-    st.plotly_chart(forecast_plot, width="stretch")
+    st.plotly_chart(forecast_plot, use_container_width=True)
 
     # Day-by-day forecast table just below the chart
     st.subheader("Day-by-Day Forecast Breakdown")
