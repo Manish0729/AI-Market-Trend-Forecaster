@@ -547,15 +547,21 @@ if st.session_state.forecast_data is not None:
         st.markdown("Best model selection (lower RMSE is better):")
         st.dataframe(perf_df[["window", "rmse"]].sort_values("rmse"), width="stretch")
 
-    # Download CSV of forecast
+    # Download CSV of forecast (no-rerun version)
     csv_bytes = forecast.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        label="Download Forecast CSV",
-        data=csv_bytes,
-        file_name=f"{ticker}_forecast_{horizon}d.csv",
-        mime="text/csv",
-        key="download_forecast_csv",
-    )
+    
+    # Create a download link using HTML/JavaScript to avoid page reload
+    import base64
+    b64 = base64.b64encode(csv_bytes).decode()
+    download_html = f'''
+        <a href="data:text/csv;base64,{b64}" 
+           download="{ticker}_forecast_{horizon}d.csv"
+           style="display:inline-block;padding:0.5rem 1rem;background-color:#FF4B4B;color:white;
+                  text-decoration:none;border-radius:0.3rem;font-weight:600;text-align:center;">
+            📥 Download Forecast CSV
+        </a>
+    '''
+    st.markdown(download_html, unsafe_allow_html=True)
 
     # Explainability section (SHAP)
     with st.expander("Why This Forecast? (Explainable AI Insights)", expanded=False):
