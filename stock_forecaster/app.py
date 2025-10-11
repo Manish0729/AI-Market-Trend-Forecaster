@@ -524,6 +524,7 @@ if trigger_showdown:
         data=csv_bytes,
         file_name=f"{ticker}_forecast_{horizon}d.csv",
         mime="text/csv",
+        key="download_forecast_csv",
     )
 
     # Explainability section (SHAP)
