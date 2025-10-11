@@ -189,6 +189,10 @@ with ctl6:
 # Final ticker resolution
 ticker = (custom_ticker.strip().upper() or base_choice)
 
+# Initialize session state for storing forecast results
+if 'forecast_data' not in st.session_state:
+    st.session_state.forecast_data = None
+
 # Initialize variables for SHAP display
 shap_figure = None
 
@@ -217,6 +221,19 @@ if trigger_showdown:
                 horizon=int(horizon),
             )
         progress.progress(100)
+        
+        # Store results in session state
+        st.session_state.forecast_data = {
+            'stock_df': stock_df,
+            'news_df': news_df,
+            'sentiment_df': sentiment_df,
+            'perf_df': perf_df,
+            'forecast': forecast,
+            'best_model': best_model,
+            'shap_figure': shap_figure,
+            'ticker': ticker,
+            'horizon': horizon
+        }
 
     except Exception as exc:  # Robustness for network/model errors
         import traceback
@@ -228,6 +245,19 @@ if trigger_showdown:
             st.code("\n".join(traceback.format_exc().splitlines()[-200:]))
         st.stop()
 
+# Display results from session state (persists across downloads)
+if st.session_state.forecast_data is not None:
+    # Extract data from session state
+    stock_df = st.session_state.forecast_data['stock_df']
+    news_df = st.session_state.forecast_data['news_df']
+    sentiment_df = st.session_state.forecast_data['sentiment_df']
+    perf_df = st.session_state.forecast_data['perf_df']
+    forecast = st.session_state.forecast_data['forecast']
+    best_model = st.session_state.forecast_data['best_model']
+    shap_figure = st.session_state.forecast_data['shap_figure']
+    ticker = st.session_state.forecast_data['ticker']
+    horizon = st.session_state.forecast_data['horizon']
+    
     st.markdown("<div class='sf-section-title'>🔍 Data Snapshots</div>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     with c1:
